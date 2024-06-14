@@ -1,4 +1,4 @@
-### Question 1. Sub-Strings
+### Sub-Strings
 A string is considered a sub-string if you can delete 0 or more characters but the entire parent string can not be deleted.
 
 For example:  
