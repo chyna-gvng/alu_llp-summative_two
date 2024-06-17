@@ -11,8 +11,7 @@ struct MinHeapNode {
     struct MinHeapNode *left, *right;
 };
 
-// A Min Heap: Collection of
-// min-heap (or Huffman tree) nodes
+// A Min Heap: Collection of min-heap (or Huffman tree) nodes
 struct MinHeap {
     unsigned size;
     unsigned capacity;
@@ -151,23 +150,26 @@ struct MinHeapNode* buildHuffmanTree(char data[], int freq[], int size) {
 }
 
 // Prints huffman codes from the root of Huffman Tree. It uses arr[] to store codes
-void printCodes(struct MinHeapNode* root, int arr[], int top) {
+void storeCodes(struct MinHeapNode* root, int arr[], int top, FILE *outputFile) {
     // Assign 0 to left edge and recur
     if (root->left) {
         arr[top] = 0;
-        printCodes(root->left, arr, top + 1);
+        storeCodes(root->left, arr, top + 1, outputFile);
     }
 
     // Assign 1 to right edge and recur
     if (root->right) {
         arr[top] = 1;
-        printCodes(root->right, arr, top + 1);
+        storeCodes(root->right, arr, top + 1, outputFile);
     }
 
     // If this is a leaf node, then it contains one of the input characters, print the character and its code
     if (isLeaf(root)) {
-        printf("%c: ", root->data);
-        printArr(arr, top);
+        fprintf(outputFile, "%c: ", root->data);
+        for (int i = 0; i < top; ++i) {
+            fprintf(outputFile, "%d", arr[i]);
+        }
+        fprintf(outputFile, "\n");
     }
 }
 
@@ -181,13 +183,13 @@ long getFileSize(const char* filename) {
 }
 
 // The main function that builds a Huffman Tree and print codes by traversing the built Huffman Tree
-void HuffmanCodes(char data[], int freq[], int size) {
+void HuffmanCodes(char data[], int freq[], int size, FILE *outputFile) {
     // Construct Huffman Tree
     struct MinHeapNode* root = buildHuffmanTree(data, freq, size);
 
     // Print Huffman codes using the Huffman tree built above
     int arr[MAX_TREE_HT], top = 0;
-    printCodes(root, arr, top);
+    storeCodes(root, arr, top, outputFile);
 }
 
 // Function to count frequency of characters in a file
@@ -200,6 +202,7 @@ void countFreq(FILE* file, int freq[]) {
 
 int main() {
     const char* filename = "recommendation.txt";
+    const char* encodedFilename = "recommendation-en.txt";
 
     // Get file size before compression
     long originalSize = getFileSize(filename);
@@ -236,12 +239,20 @@ int main() {
         }
     }
 
-    // Build Huffman Codes
-    HuffmanCodes(data, frequencies, uniqueChars);
+    // Open the file to store the Huffman codes
+    FILE *outputFile = fopen(encodedFilename, "w");
+    if (!outputFile) {
+        fprintf(stderr, "Cannot open file %s\n", encodedFilename);
+        return 1;
+    }
 
-    // For simplicity, assume the compressed size is half the original size
-    long compressedSize = originalSize / 2;
-    printf("Compressed file size: %ld bytes\n", compressedSize);
+    // Build Huffman Codes and write to file
+    HuffmanCodes(data, frequencies, uniqueChars, outputFile);
+    fclose(outputFile);
+
+    // Get the size of the encoded file
+    long encodedSize = getFileSize(encodedFilename);
+    printf("Encoded file size: %ld bytes\n", encodedSize);
 
     free(data);
     free(frequencies);
